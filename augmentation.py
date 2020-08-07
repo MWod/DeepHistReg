@@ -3,7 +3,7 @@ import scipy.ndimage as nd
 import matplotlib.pyplot as plt
 import random
 
-import anhir_utils as au
+import utils
 
 def randrange(vmin, vmax):
     return (random.random() * (vmax - vmin)) + vmin
@@ -108,16 +108,16 @@ def affine_augmentation(affine_generation_params, augment_both=True):
         transform = generate_random_affine_transform(source.shape, **affine_generation_params)
         if augment_both:
             if random.random() > 0.5:
-                transformed_source = au.affine_transform(source, transform)
+                transformed_source = utils.numpy_affine_transform(source, transform)
                 transformed_target = target
             else:
                 transformed_source = source
-                transformed_target = au.affine_transform(target, transform)
-                transform = au.inv_transform(transform)
+                transformed_target = utils.numpy_affine_transform(target, transform)
+                transform = utils.numpy_inv_transform(transform)
         else:
-            transformed_source = au.affine_transform(source, transform)
+            transformed_source = utils.numpy_affine_transform(source, transform)
             transformed_target = target
-        return transformed_source, transformed_target, au.inv_transform(transform)
+        return transformed_source, transformed_target, utils.numpy_inv_transform(transform)
     return augmentation
 
 def rigid_augmentation(rigid_generation_params, augment_both=True):
@@ -125,15 +125,14 @@ def rigid_augmentation(rigid_generation_params, augment_both=True):
         transform = generate_random_rigid_transform(source.shape, **rigid_generation_params)
         if augment_both:
             if random.random() > 0.5:
-                transformed_source = au.affine_transform(source, transform)
+                transformed_source = utils.numpy_affine_transform(source, transform)
                 transformed_target = target
             else:
                 transformed_source = source
-                transformed_target = au.affine_transform(target, transform)
-                transform = au.inv_transform(transform)
+                transformed_target = utils.numpy_affine_transform(target, transform)
+                transform = utils.numpy_inv_transform(transform)
         else:
-            transformed_source = au.affine_transform(source, transform)
+            transformed_source = utils.numpy_affine_transform(source, transform)
             transformed_target = target
-        return transformed_source, transformed_target, au.inv_transform(transform)
+        return transformed_source, transformed_target, utils.numpy_inv_transform(transform)
     return augmentation
-

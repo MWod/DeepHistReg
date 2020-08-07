@@ -9,86 +9,17 @@ from torchsummary import summary
 
 
 class Affine_Network(nn.Module):
-    # Important - assumes the temporary mini batch size equal to 1! The real batch size must be handled by the calling function.
     def __init__(self, device):
         super(Affine_Network, self).__init__()
         self.device = device
 
         self.feature_extractor = Feature_Extractor(self.device)
-        self.feature_combiner = nn.Sequential(
-            nn.Conv2d(512, 256, 3, stride=2, padding=1),
-            nn.GroupNorm(256, 256),
-            nn.PReLU(),
-            nn.Conv2d(256, 256, 3, stride=2, padding=1),
-            nn.GroupNorm(256, 256),
-            nn.PReLU(),
-            nn.AdaptiveAvgPool2d((1, 1)),
-        )
-        self.attention_network = Attention_Network()
         self.regression_network = Regression_Network()
 
-        self.patch_size = (224, 224)
-        self.unfold = nn.Unfold(self.patch_size, stride=self.patch_size)
-
     def forward(self, source, target):
-        us, ut = self.pad_and_unfold(source, target)
-        grid_size = (math.ceil(source.size(2) / self.patch_size[0]), math.ceil(source.size(3) / self.patch_size[1]))
-        us = self.feature_extractor(us)
-        ut = self.feature_extractor(ut)
-        x = torch.cat((us, ut), dim=1)
-        x = self.feature_combiner(x)
-        x = x.view(grid_size[0], grid_size[1], x.size(1))
-        x = x.permute(2, 0, 1)
-        x = x.view(1, 1, x.size(0), x.size(1), x.size(2))
-        x = self.attention_network(x)
-        x = self.regression_network(x)
-        return x
-
-    def pad_and_unfold(self, source, target):
-        pad_x = math.ceil(source.size(3) / self.patch_size[1])*self.patch_size[1] - source.size(3)
-        pad_y = math.ceil(source.size(2) / self.patch_size[0])*self.patch_size[0] - source.size(2)
-        b_x, e_x = math.floor(pad_x / 2), math.ceil(pad_x / 2)
-        b_y, e_y = math.floor(pad_y / 2), math.ceil(pad_y / 2)
-        source = F.pad(source, (b_x, e_x, b_y, e_y))
-        target = F.pad(target, (b_x, e_x, b_y, e_y))
-        us = self.unfold(source)
-        ut = self.unfold(target)
-        us = us.view(us.size(0), 1, self.patch_size[0], self.patch_size[1], us.size(2))
-        ut = ut.view(ut.size(0), 1, self.patch_size[0], self.patch_size[1], ut.size(2))
-        us = us[0].permute(3, 0, 1, 2)
-        ut = ut[0].permute(3, 0, 1, 2)
-        return us, ut
-
-    def show_patchs(self, image, grid_size):
-        t_image = image.detach().cpu()
-        plt.figure()
-        for i in range(grid_size[0]*grid_size[1]):
-            plt.subplot(grid_size[0], grid_size[1], i+1)
-            plt.imshow(t_image[i, 0, :, :,], cmap='gray')
-            plt.axis('off')
-
-class Attention_Network(nn.Module):
-    def __init__(self):
-        super(Attention_Network, self).__init__()
-
-        self.attention_module = nn.Sequential(
-            nn.Conv3d(1, 256, kernel_size=(256, 3, 3), padding=(0, 1, 1)),
-            nn.GroupNorm(256, 256),
-            nn.PReLU(),
-        )
-
-        self.compose_module = nn.Sequential(
-            nn.Conv2d(256, 256, 3, stride=1, padding=1),
-            nn.GroupNorm(256, 256),
-            nn.PReLU(),
-            nn.AdaptiveAvgPool2d((1, 1))
-        )
-
-    def forward(self, x):
-        x = self.attention_module(x)
-        x = x[:, :, 0, :, :]
-        x = self.compose_module(x)
+        x = self.feature_extractor(torch.cat((source, target), dim=1))
         x = x.view(1, -1)
+        x = self.regression_network(x)
         return x
 
 class Regression_Network(nn.Module):
@@ -96,8 +27,6 @@ class Regression_Network(nn.Module):
         super(Regression_Network, self).__init__()
 
         self.fc = nn.Sequential(
-            nn.Linear(256, 256),
-            nn.PReLU(),
             nn.Linear(256, 6),
         )
 
@@ -142,12 +71,24 @@ class Feature_Extractor(nn.Module):
         super(Feature_Extractor, self).__init__()
         self.device = device
         self.input_layer = nn.Sequential(
-            nn.Conv2d(1, 32, 7, stride=2, padding=3),
+            nn.Conv2d(2, 64, 7, stride=2, padding=3),
         )
-        self.layer_1 = Forward_Layer(32, pool=True)
-        self.layer_2 = Forward_Layer(64, pool=True)
+        self.layer_1 = Forward_Layer(64, pool=True)
+        self.layer_2 = Forward_Layer(128, pool=False)
         self.layer_3 = Forward_Layer(128, pool=True)
-        self.layer_4 = Forward_Layer(256)
+        self.layer_4 = Forward_Layer(256, pool=False)
+        self.layer_5 = Forward_Layer(256, pool=True)
+        self.layer_6 = Forward_Layer(512, pool=True)
+
+        self.last_layer = nn.Sequential(
+            nn.Conv2d(1024, 512, 3, stride=2, padding=1),
+            nn.GroupNorm(512, 512),
+            nn.PReLU(),
+            nn.Conv2d(512, 256, 3, stride=2, padding=1),
+            nn.GroupNorm(256, 256),
+            nn.PReLU(),
+            nn.AdaptiveAvgPool2d((1, 1))
+        )
 
     def forward(self, x):
         x = self.input_layer(x)
@@ -155,6 +96,9 @@ class Feature_Extractor(nn.Module):
         x = self.layer_2(x)
         x = self.layer_3(x)
         x = self.layer_4(x)
+        x = self.layer_5(x)
+        x = self.layer_6(x)
+        x = self.last_layer(x)
         return x
 
 def load_network(device, path=None):
@@ -165,7 +109,7 @@ def load_network(device, path=None):
         model.eval()
     return model
 
-def test_forward_pass_simple():
+def test_forward_pass():
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     model = load_network(device)
     y_size = 760
@@ -185,7 +129,7 @@ def test_forward_pass_simple():
 
 
 def run():
-    test_forward_pass_simple()
+    test_forward_pass()
 
 if __name__ == "__main__":
     run()
