@@ -1,6 +1,6 @@
 ## About
 
-The repository contains the software used to obtain the DeepHistReg results (ANHIR challenge).
+The repository contains software used to obtain the DeepHistReg results (ANHIR challenge).
 The purpose of the repository is to make the results fully reproducible. Please contact us in case of any technical problems.
 For the iterative MIND-Demons (the best median of median rTRE among all participants but significantly higher registration time) please visit: [ANHIR-AGH](https://github.com/lNefarin/ANHIR_MW)
 
@@ -12,7 +12,7 @@ There are two ways to use the code:
 
 ## Access to the submission file
 
-If you do not want or do not have time to use the code and the purpose is just to obtain the results just contact us.
+If you do not want or do not have time to use the code and the purpose is just to obtain the results then contact us.
 We will provide the submission file used to create the ANHIR submission with the transformed landmarks and the reported registration time.
 
 ## How to reproduce the results
@@ -43,7 +43,7 @@ To improve the results and perform your own training, the following steps are ne
 
 ## Dataset
 
-For the dataset access and full description please visit [ANHIR Webiste](https://anhir.grand-challenge.org/Data/).
+For the dataset access and the full description please visit [ANHIR Webiste](https://anhir.grand-challenge.org/Data/).
 If you found the dataset useful please cite the appropriate publications.
 
 ## Dependencies
