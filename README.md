@@ -27,7 +27,7 @@ To reproduce the results without performing the training from scratch, perform t
 * Add your own machine benchmark file to the submission folder and zip the folder (see challenge website [ANHIR Webiste](https://anhir.grand-challenge.org/Data/)).
 * The submission is ready.
 
-## How to perform own traning/validation
+## How to perform own training/validation
 
 To improve the results and perform your own training, the following steps are necessary:
 * [Prepare Dataset](https://github.com/lNefarin/DeepHistReg/blob/master/prepare_datasets.py)
