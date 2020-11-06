@@ -63,11 +63,11 @@ The software was tested on Ubuntu 18.04 LTS and Python version >=3.6.x.
 ## Acknowledgmnets
 
 If you found the software useful please cite:
-* Marek Wodzinski and Henning Müller, *DeepHistReg: Unsupervised Deep Learning Registration Framework for Differently Stained Histology Samples*. In preparation. 
+* Marek Wodzinski and Henning Müller, *DeepHistReg: Unsupervised Deep Learning Registration Framework for Differently Stained Histology Samples*. Computer Methods and Programs in Biomedicine Vol. 198, January 2021. https://www.sciencedirect.com/science/article/pii/S0169260720316321
 The article presents the whole DeepHistReg framework with deep segmentation, initial alignment, affine registration and improved deformable registration.
-* Marek Wodzinski and Henning Müller, *Unsupervised Learning-based Nonrigid Registration of High Resolution Histology Images*, 11th International Workshop on Machine Learning in Medical Imaging (MICCAI-MLMI), 2020. 
+* Marek Wodzinski and Henning Müller, *Unsupervised Learning-based Nonrigid Registration of High Resolution Histology Images*, 11th International Workshop on Machine Learning in Medical Imaging (MICCAI-MLMI), 2020. https://link.springer.com/chapter/10.1007/978-3-030-59861-7_49
 The article introduces the first version of the nonrigid registration.
-* Marek Wodzinski and Henning Müller, *Learning-based Affine Registration of Histological Images*,  9th International Workshop on Biomedical Image Registration (WBIR), 2020.
+* Marek Wodzinski and Henning Müller, *Learning-based Affine Registration of Histological Images*,  9th International Workshop on Biomedical Image Registration (WBIR), 2020. https://link.springer.com/chapter/10.1007/978-3-030-50120-4_2
 The article introduces the patch-based, resolution-independent affine registration being a part of the framework.
 
 You may also find useful to cite (however, the DeepHistReg is not part of the challenge summary article):
