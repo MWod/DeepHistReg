@@ -394,13 +394,13 @@ def get_gaussian_kernel(kernel_size=3, sigma=2, channels=3):
     return gaussian_filter
 
 def tensor_affine_transform(tensor, tensor_transform):
-    affine_grid = F.affine_grid(tensor_transform, tensor.size())
+    affine_grid = F.affine_grid(tensor_transform, tensor.size(),align_corners=True)
     transformed_tensor = F.grid_sample(tensor, affine_grid,align_corners=True)
     return transformed_tensor
 
 def transform_to_displacement_field(tensor, tensor_transform, device='cpu'):
     y_size, x_size = tensor.size(2), tensor.size(3)
-    deformation_field = F.affine_grid(tensor_transform, tensor.size())
+    deformation_field = F.affine_grid(tensor_transform, tensor.size(),align_corners=True)
     gy, gx = torch.meshgrid(torch.arange(y_size), torch.arange(x_size))
     gy = gy.type(torch.FloatTensor).to(device)
     gx = gx.type(torch.FloatTensor).to(device) 
