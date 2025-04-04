@@ -212,8 +212,8 @@ def compose_displacement_field(u, v, device="cpu", delete_outliers=True, return_
     added_x = u_x_1 + t_x
     added_y = u_y_1 + t_y
     added_grid = n_grid + nv
-    i_u_x = F.grid_sample(added_x.view(1, added_x.size(0), added_x.size(1), added_x.size(2)), added_grid.view(1, added_grid.size(0), added_grid.size(1), added_grid.size(2)), padding_mode='border')[0]
-    i_u_y = F.grid_sample(added_y.view(1, added_y.size(0), added_y.size(1), added_y.size(2)), added_grid.view(1, added_grid.size(0), added_grid.size(1), added_grid.size(2)), padding_mode='border')[0]
+    i_u_x = F.grid_sample(added_x.view(1, added_x.size(0), added_x.size(1), added_x.size(2)), added_grid.view(1, added_grid.size(0), added_grid.size(1), added_grid.size(2)), padding_mode='border',align_corners=True)[0]
+    i_u_y = F.grid_sample(added_y.view(1, added_y.size(0), added_y.size(1), added_y.size(2)), added_grid.view(1, added_grid.size(0), added_grid.size(1), added_grid.size(2)), padding_mode='border',align_corners=True)[0]
     indexes = (added_grid[:, :, 0] >= 1.0) | (added_grid[:, :, 0] <= -1.0) | (added_grid[:, :, 1] >= 1.0) | (added_grid[:, :, 1] <= -1.0)
     indexes = indexes.view(1, indexes.size(0), indexes.size(1))
     n_x = i_u_x - grid_x
@@ -255,8 +255,8 @@ def compose_displacement_fields(u, v, device="cpu"):
     added_x = u_x_1 + t_x
     added_y = u_y_1 + t_y
     added_grid = n_grid + nv
-    i_u_x = F.grid_sample(added_x, added_grid, padding_mode='border')
-    i_u_y = F.grid_sample(added_y, added_grid, padding_mode='border')
+    i_u_x = F.grid_sample(added_x, added_grid, padding_mode='border',align_corners=True)
+    i_u_y = F.grid_sample(added_y, added_grid, padding_mode='border',align_corners=True)
     indexes = (added_grid[:, :, :, 0] >= 1.0) | (added_grid[:, :, :, 0] <= -1.0) | (added_grid[:, :, :, 1] >= 1.0) | (added_grid[:, :, :, 1] <= -1.0)
     indexes = indexes.view(indexes.size(0), 1, indexes.size(1), indexes.size(2))
     n_x = i_u_x - grid_x
@@ -296,7 +296,7 @@ def warp_tensor(tensor, displacement_field, device="cpu"):
     u_y = u_y / (y_size - 1) * 2
     n_grid[:, :, 0] = n_grid[:, :, 0] + u_x
     n_grid[:, :, 1] = n_grid[:, :, 1] + u_y
-    transformed_tensor = F.grid_sample(tensor.view(1, 1, y_size, x_size), n_grid.view(1, n_grid.size(0), n_grid.size(1), n_grid.size(2)), mode='bilinear', padding_mode='zeros')[0, 0, :, :]
+    transformed_tensor = F.grid_sample(tensor.view(1, 1, y_size, x_size), n_grid.view(1, n_grid.size(0), n_grid.size(1), n_grid.size(2)), mode='bilinear', padding_mode='zeros',align_corners=True)[0, 0, :, :]
     return transformed_tensor
 
 def warp_tensors(tensors, displacement_fields, device="cpu"):
@@ -319,7 +319,7 @@ def warp_tensors(tensors, displacement_fields, device="cpu"):
     u_y = u_y / (y_size - 1) * 2
     n_grid[:, :, :, 0] = n_grid[:, :, :, 0] + u_x
     n_grid[:, :, :, 1] = n_grid[:, :, :, 1] + u_y
-    transformed_tensors = F.grid_sample(tensors, n_grid, mode='bilinear', padding_mode='zeros')
+    transformed_tensors = F.grid_sample(tensors, n_grid, mode='bilinear', padding_mode='zeros',align_corners=True)
     return transformed_tensors
 
 def resample_tensor(tensor, new_size, device="cpu"):
@@ -333,7 +333,7 @@ def resample_tensor(tensor, new_size, device="cpu"):
     n_grid_x = grid_x.view(-1, grid_x.size(0), grid_x.size(1))
     n_grid_y = grid_y.view(-1, grid_y.size(0), grid_y.size(1))
     n_grid = torch.stack((n_grid_x, n_grid_y), dim=3)
-    resampled_tensor = F.grid_sample(tensor.view(1, 1, tensor.size(0), tensor.size(1)), n_grid, mode='bilinear', padding_mode='zeros')[0, 0, :, :]
+    resampled_tensor = F.grid_sample(tensor.view(1, 1, tensor.size(0), tensor.size(1)), n_grid, mode='bilinear', padding_mode='zeros',align_corners=True)[0, 0, :, :]
     return resampled_tensor
 
 def resample_tensors(tensors, new_size, device="cpu"):
@@ -349,7 +349,7 @@ def resample_tensors(tensors, new_size, device="cpu"):
     n_grid_x = grid_x.view(1, -1).repeat(no_samples, 1).view(-1, grid_x.size(0), grid_x.size(1))
     n_grid_y = grid_y.view(1, -1).repeat(no_samples, 1).view(-1, grid_y.size(0), grid_y.size(1))
     n_grid = torch.stack((n_grid_x, n_grid_y), dim=3)
-    resampled_tensors = F.grid_sample(tensors, n_grid, mode='bilinear', padding_mode='zeros')
+    resampled_tensors = F.grid_sample(tensors, n_grid, mode='bilinear', padding_mode='zeros',align_corners=True)
     return resampled_tensors
 
 def affine2theta(affine, shape):
@@ -394,13 +394,13 @@ def get_gaussian_kernel(kernel_size=3, sigma=2, channels=3):
     return gaussian_filter
 
 def tensor_affine_transform(tensor, tensor_transform):
-    affine_grid = F.affine_grid(tensor_transform, tensor.size())
-    transformed_tensor = F.grid_sample(tensor, affine_grid)
+    affine_grid = F.affine_grid(tensor_transform, tensor.size(),align_corners=True)
+    transformed_tensor = F.grid_sample(tensor, affine_grid,align_corners=True)
     return transformed_tensor
 
 def transform_to_displacement_field(tensor, tensor_transform, device='cpu'):
     y_size, x_size = tensor.size(2), tensor.size(3)
-    deformation_field = F.affine_grid(tensor_transform, tensor.size())
+    deformation_field = F.affine_grid(tensor_transform, tensor.size(),align_corners=True)
     gy, gx = torch.meshgrid(torch.arange(y_size), torch.arange(x_size))
     gy = gy.type(torch.FloatTensor).to(device)
     gx = gx.type(torch.FloatTensor).to(device) 
@@ -427,7 +427,7 @@ def upsample_displacement_fields(displacement_fields, new_size, device="cpu"):
     n_grid_x = grid_x.view(1, -1).repeat(no_samples, 1).view(-1, grid_x.size(0), grid_x.size(1))
     n_grid_y = grid_y.view(1, -1).repeat(no_samples, 1).view(-1, grid_y.size(0), grid_y.size(1))
     n_grid = torch.stack((n_grid_x, n_grid_y), dim=3)
-    resampled_displacement_fields = F.grid_sample(displacement_fields, n_grid, mode='bilinear', padding_mode='zeros')
+    resampled_displacement_fields = F.grid_sample(displacement_fields, n_grid, mode='bilinear', padding_mode='zeros',align_corners=True)
     resampled_displacement_fields[:, 0, :, :] *= x_size / old_x_size
     resampled_displacement_fields[:, 1, :, :] *= y_size / old_y_size
     return resampled_displacement_fields
@@ -445,7 +445,7 @@ def upsample_displacement_field(displacement_field, new_size, device="cpu"):
     n_grid_x = grid_x.view(-1, grid_x.size(0), grid_x.size(1))
     n_grid_y = grid_y.view(-1, grid_y.size(0), grid_y.size(1))
     n_grid = torch.stack((n_grid_x, n_grid_y), dim=3)
-    resampled_displacement_field = F.grid_sample(displacement_field.view(1, 2, displacement_field.size(1), displacement_field.size(2)), n_grid, mode='bilinear', padding_mode='zeros')[0, :, :, :]
+    resampled_displacement_field = F.grid_sample(displacement_field.view(1, 2, displacement_field.size(1), displacement_field.size(2)), n_grid, mode='bilinear', padding_mode='zeros',align_corners=True)[0, :, :, :]
     resampled_displacement_field[0, :, :] *= x_size / old_x_size
     resampled_displacement_field[1, :, :] *= y_size / old_y_size
     return resampled_displacement_field
